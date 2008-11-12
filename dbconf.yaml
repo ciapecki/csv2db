@@ -1,0 +1,36 @@
+#server: emeadb.de.oracle.com
+#username: chris
+#password: ciapek 
+#delimeter: "|"
+
+#standardize: false
+
+server: mktgcd 
+#server: jupiterdb.us.oracle.com
+username: kcierpisz 
+password: ciapek
+#username: idg
+#password: idg
+#delimeter: "\t"
+delimeter: ","
+sqlldr_options: direct=true
+#encoding: utf-8
+#characterset: WE8ISO8859P1
+#removeNewLineChr: true
+
+#server: tesla.de.oracle.com
+#username: tesla
+#password: tesla
+#delimeter: ","
+#directUpload: true  ## insert without sqlldr
+
+#replace: false
+
+#server: emeadb.de.oracle.com
+#username: amoga
+#password: alexander
+#username: IASG
+#password: IASG
+#delimeter: ";"
+
+
