@@ -1,0 +1,9 @@
+server: emeadb.de.oracle.com
+username: xxxx 
+password: xxxx 
+#delimeter: "\t"
+delimeter: ","
+sqlldr_options: direct=true
+#standardize: false 
+#encoding: utf-8
+#characterset: WE8ISO8859P1
