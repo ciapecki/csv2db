@@ -1,0 +1,9 @@
+*.bat
+Bad/*
+Ctl/*
+Sql/*
+Data/*
+Dsc/*
+Log/*
+*.exe
+dbconf.yaml
