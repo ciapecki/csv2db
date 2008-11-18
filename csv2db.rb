@@ -8,12 +8,6 @@ require 'net/ftp'
 #    exit if RUBYSCRIPT2EXE.is_compiling?
 
 
-=begin
-    @@db_conn = DBI.connect("dbi:OCI8:dwprd.us.oracle.com", "kcierpis", "ciapekk")
-    puts "connected disconnecting"
-    @@db_conn.disconnect
-=end
-
 require 'rubygems'
 #require 'progressbar'
 @@server = ""
@@ -55,7 +49,7 @@ class Csv2orcl
 
 	def create_dir_if_not_exists(dir)
 		if FileTest.directory?(dir)
-			puts dir + " directory - ok"
+			#puts dir + " directory - ok"
 		else 
 			puts dir + " directory does not exist, creating..."
 			Dir.mkdir(dir)
@@ -64,9 +58,10 @@ class Csv2orcl
 	
 	def process
 		if FileTest.directory?(@csvDirectory)
-			puts @csvDirectory + " direcotry - ok"
+			#puts @csvDirectory + " direcotry - ok"
 		else
-			puts "CSV direcotry does not exist, exiting"
+			puts "Data direcotry does not exist"
+         puts "Please crate Data/ directory and placed your delimited files there, exiting"
 			return 0
 		end
 
@@ -77,16 +72,20 @@ class Csv2orcl
 		create_dir_if_not_exists("Bad/")
 	
 		#puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter.gsub("X'002c'",",")
-		puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter
+		#puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter
 		@columnNames = CSVreader.new.getColumnNames(@csvFileNamePath) unless @utf
 		@columnNames = UnicodeReader.new.getColumnNames(@csvFileNamePath) if @utf
 		#p "columnNames: " + @columnNames
-		
+	  
+      puts "\nFollowing columns will be created:"
+      @columnNames[1..-1].split("\n").each {|col|
+         puts col.gsub(/CHAR\(4000\) \"trim\(:\\\".*/,'')
+      }
 	
 		ctlFile = ControllFile.new(@csvFileName,@csvFileNamePath,@delimeter,@columnNames,@utf)
 		ctlFile.process
 
-		puts "Processing file " + @ddlFileNamePath 
+		#puts "Processing file " + @ddlFileNamePath 
 		ddlFile = File.new(@ddlFileNamePath, "w")
 		createTable = "CREATE TABLE " + @csvFileName.slice(0..-5) +" "
 
@@ -271,7 +270,7 @@ class ControllFile
         when "|"  : @delimeter = "X'007c'"  # '\t'
       end
     end
-      puts "delimeter: #{@delimeter.inspect} as"
+      #puts "delimeter: #{@delimeter.inspect} as"
     
     @delimeter = "'#{@delimeter}'" unless @utf and (@@encoding.nil? or @@encoding == "ucs-2le")
 
@@ -324,19 +323,20 @@ class UnicodeReader
 		#headersTab = @headers.split("\t")   # changed to @@delimeter
     #puts "delimglob: #{@@delimeter}"
 
-      p "ic: #{@@encoding}" unless @@encoding.nil?
+      puts "encoding: #{@@encoding}" unless @@encoding.nil?
 		ic = Iconv.new("US-ASCII//IGNORE", "UTF-16LE") if @@encoding.nil? or @@encoding == "ucs-2le"
 		ic = Iconv.new("US-ASCII//IGNORE", "UTF-8") if @@encoding != nil and @@encoding == "utf-8"
    
-    #p @headers.size 
-    #@headers.each_with_index do |e,ind|
-      #p e
-      #@headers[ind] = ic.iconv(e.gsub(/^\000/,''))
+   begin
       @headers = ic.iconv(@headers.gsub(/^\000/,''))
-    #end 
-    
-      #@headers = ic.iconv(@headers.gsub(/^000/,''))
-    
+   
+	rescue StandardError => e
+		puts "!!! Error in encoding"
+      puts "Please check your dbconf.yaml encoding value"
+		exit
+	end
+
+
     headersTab = CSV::Reader.parse(@headers,fs = @@delimeter).to_a[0]
 
     #headersTab = @headers.split(@@delimeter)
@@ -353,12 +353,15 @@ class UnicodeReader
 #		@columnNamesString = @columnNamesString.chomp.slice(0..-2) + ")"
 
     
-      puts "standardized_column_names: #{@@standardize}"
+      puts "standardize: #{@@standardize}" 
+      puts "  -> if you do not want to change the column names use \n     standardize: false \n     in your dbconf.yaml file" if @@standardize
+
 
       headersTab.each{|column_name|
          column_name.upcase!
          column_name.gsub!(' ','_')
          column_name.gsub!('/','_')
+         column_name.gsub!('-','_')
       } if !@@standardize.nil? and @@standardize == true
       #p headersTab
 
@@ -379,7 +382,7 @@ end
 class CSVreader
 	@columnNamesString
 	def getColumnNames(fileName)
-		p "fileNameeee : " + fileName + @@delimeter
+		#p "fileNameeee : " + fileName + @@delimeter
 		@counter = 0
 	begin
 		CSV::Reader.parse(File.open(fileName,'rb'),fs = @@delimeter) do |row|
@@ -388,13 +391,15 @@ class CSVreader
                
             #p "row: #{row} delim: #{fs}"
 
-      puts "standardized_column_names: #{@@standardize}"
+      puts "standardize: #{@@standardize}" 
+      puts "  -> if you do not want to change the column names use \n     standardize: false \n     in your dbconf.yaml file" if @@standardize
 
       row.each{|column_name|
            #p "row: #{column_name}"
          column_name.upcase!
          column_name.gsub!(' ','_')
          column_name.gsub!('/','_')
+         column_name.gsub!('-','_')
       } if !@@standardize.nil? and @@standardize == true
 
       #p row
@@ -436,7 +441,7 @@ class Logger
      username = "csv2db"
      password = "csv2db2"
      begin
-       p "filename: #{filename}"
+       #p "filename: #{filename}"
        Net::FTP.open(server) do |ftp|
         ftp.login(user=username,passwd=password)
         remote_file = File.basename(filename)
@@ -462,6 +467,7 @@ if ARGV.length < 1
    #l.log_it("dbconf.yaml2")
 elsif File.exists? "dbconf.yaml" then
 
+	ext = ARGV[0].slice(ARGV[0].rindex('.')+1,ARGV[0].length-ARGV[0].rindex('.'))  
      configFile = File.open("dbconf.yaml") 
      config = YAML::load_documents(configFile) { |conf| 
 	     @@server 		= conf['server']
@@ -471,8 +477,9 @@ elsif File.exists? "dbconf.yaml" then
 	     @@removeNewLineChr = conf['removeNewLineChr']
 	     @@directUpload 	= conf['directUpload'] if conf['directUpload'] != nil
 	     @@replace 		= conf['replace'] if conf['replace'] != nil
-	     @@encoding 		= conf['encoding'] if conf['encoding'] != nil
-	     @@encoding 		= "ucs-2le" if conf['encoding'] == nil
+        @@encoding      = nil
+        @@encoding 		= conf['encoding'] if conf['encoding'] != nil
+	     @@encoding 		= "ucs-2le" if conf['encoding'] == nil and ext =~ /^txt$/i
         @@characterset  = nil
         @@characterset  = conf['characterset'] if conf['characterset'] != nil
         @@sqlldr_options = nil
@@ -483,17 +490,17 @@ elsif File.exists? "dbconf.yaml" then
      }
 
      #p "standardize: #{@@standardize}"
-     p "characterset: #{@@characterset}" if @@characterset
+     puts "characterset: #{@@characterset}" if @@characterset
+     puts "delimiter: #{@@delimeter.inspect}" unless @@delimeter.nil?
 
-     	p ARGV[0]
+#     	p ARGV[0]
 
       ctl_file = ARGV[0].gsub(/\.csv$/i,".ctl").gsub(/\.txt$/i,".ctl")
 
 
 	#p ARGV[0].rindex('.')
-	ext = ARGV[0].slice(ARGV[0].rindex('.')+1,ARGV[0].length-ARGV[0].rindex('.'))
 	
-	if ext =~ /^txt$/i
+	if ext =~ /^txt$/i or ext =~ /^csv$/i and @@encoding != nil
 		@@directUpload = false
 		csv2orcl = Csv2orcl.new(ARGV[0],@@delimeter,nil,true) # changed from \t
 	else 
@@ -507,7 +514,7 @@ elsif File.exists? "dbconf.yaml" then
       
 
 
-  	puts "directUpload: " << @@directUpload.to_s
+  	#puts "directUpload: " << @@directUpload.to_s
 	if csv2orcl.process then 
 			puts ""
 			puts "ERROR: correct and run once again"

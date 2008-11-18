@@ -1,4 +1,27 @@
-Rel. 0.9.1
+Rel. 0.9.6
+
+0.9.6 - now even files with .csv can be treated as Unicode files
+         in these cases you MUST specify encoding in your dbconf.yaml file
+         e.g. 
+            test_GCM_download.csv (encoded in ucs-2le ~ excel Unicode encoding)
+            in dbconf.yaml put:
+            encoding: ucs-2le
+            (it is not needed when you change the extension to .txt -> default all .txt files are treated as encoded in ucs-2le)
+
+0.9.5 - added standardized column names (as default):
+         e.g. "Party Name" => PARTY_NAME
+         if you want to disable that feature put in dbconf.yaml
+         standardize: false 
+
+0.9.4 - removed optionally enclosed by case when uploading tab separated fields
+
+0.9.3 - works under Linux (tested on Debian)
+      - a very big performance gain (rows=1000) by direct loads
+      - supported Unicode (as from excel)
+      - supported utf8
+      e.g. characterset: utf8
+           characterset: ucs-2le (default) not need to be set
+           both multibyte charactersets need to have a datafile with .txt extension
 
 0.9.1 - supports characterset 
        e.g. characterset: WE8ISO8859P1
