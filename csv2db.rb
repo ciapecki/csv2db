@@ -466,6 +466,8 @@ end
 
 l = Logger.new
 
+puts "\ncsv2db release0.9.6\n"
+
 if ARGV.length < 1
 	puts "Usage: " + $0 + " <fileName>.[csv|txt] [,|;]"
    #l.log_it("dbconf.yaml2")
@@ -495,7 +497,7 @@ elsif File.exists? "dbconf.yaml" then
 
      #p "standardize: #{@@standardize}"
      puts "characterset: #{@@characterset}" if @@characterset
-     puts "delimiter: #{@@delimeter.inspect}" unless @@delimeter.nil?
+     puts "\ndelimiter: #{@@delimeter.inspect}" unless @@delimeter.nil?
 
 #     	p ARGV[0]
 
