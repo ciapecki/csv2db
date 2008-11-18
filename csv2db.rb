@@ -76,8 +76,11 @@ class Csv2orcl
 		@columnNames = CSVreader.new.getColumnNames(@csvFileNamePath) unless @utf
 		@columnNames = UnicodeReader.new.getColumnNames(@csvFileNamePath) if @utf
 		#p "columnNames: " + @columnNames
-	  
-      puts "\nFollowing columns will be created:"
+	 
+
+      table_name = @csvFileName.slice(0..-5)
+
+      puts "\nTable #{table_name.upcase} with following columns will be created:"
       @columnNames[1..-1].split("\n").each {|col|
          puts col.gsub(/CHAR\(4000\) \"trim\(:\\\".*/,'')
       }
@@ -87,7 +90,8 @@ class Csv2orcl
 
 		#puts "Processing file " + @ddlFileNamePath 
 		ddlFile = File.new(@ddlFileNamePath, "w")
-		createTable = "CREATE TABLE " + @csvFileName.slice(0..-5) +" "
+
+		createTable = "CREATE TABLE #{table_name} "
 
 		if @@removeNewLineChr != true 
 			#puts "no removal"
@@ -108,7 +112,7 @@ class Csv2orcl
 
 		#batFileName = @csvFileName.slice(0..-4) + "bat"
 		batFileName = self.getBatFileName
-		puts "Processing file " + batFileName unless @@directUpload
+		#puts "Processing file " + batFileName unless @@directUpload
 		batFile = File.new(batFileName, "w")
 		#added #!/bin/sh\n for system call from Fairfax
 		batString = "#!/bin/sh\nsqlplus " +
