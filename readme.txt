@@ -1,4 +1,8 @@
-Rel. 0.9.6
+Rel. 0.9.7pre
+
+0.9.7 - filename to process can be in form: Data\<filename.[txt|csv]>
+         or Data/<filename.[txt|csv]>
+         which is useful when using bash completion
 
 0.9.6 - now even files with .csv can be treated as Unicode files
          in these cases you MUST specify encoding in your dbconf.yaml file
