@@ -473,7 +473,10 @@ if ARGV.length < 1
    #l.log_it("dbconf.yaml2")
 elsif File.exists? "dbconf.yaml" then
 
-	ext = ARGV[0].slice(ARGV[0].rindex('.')+1,ARGV[0].length-ARGV[0].rindex('.'))  
+  
+   file_to_process = ARGV[0].gsub(/.*\//,'').gsub(/.*\\/,'')
+	#ext = ARGV[0].slice(ARGV[0].rindex('.')+1,ARGV[0].length-ARGV[0].rindex('.'))  
+	ext = file_to_process.slice(file_to_process.rindex('.')+1,file_to_process.length-file_to_process.rindex('.'))  
      configFile = File.open("dbconf.yaml") 
      config = YAML::load_documents(configFile) { |conf| 
 	     @@server 		= conf['server']
@@ -501,20 +504,21 @@ elsif File.exists? "dbconf.yaml" then
 
 #     	p ARGV[0]
 
-      ctl_file = ARGV[0].gsub(/\.csv$/i,".ctl").gsub(/\.txt$/i,".ctl")
+      #ctl_file = ARGV[0].gsub(/\.csv$/i,".ctl").gsub(/\.txt$/i,".ctl")
+      ctl_file = file_to_process.gsub(/\.csv$/i,".ctl").gsub(/\.txt$/i,".ctl")
 
 
 	#p ARGV[0].rindex('.')
 	
 	if ext =~ /^txt$/i or ext =~ /^csv$/i and @@encoding != nil
 		@@directUpload = false
-		csv2orcl = Csv2orcl.new(ARGV[0],@@delimeter,nil,true) # changed from \t
+		csv2orcl = Csv2orcl.new(file_to_process,@@delimeter,nil,true) # changed from \t
 	else 
 		case ARGV.length
 		when 1 
-			csv2orcl = Csv2orcl.new(ARGV[0], @@delimeter)
+			csv2orcl = Csv2orcl.new(file_to_process, @@delimeter)
 		when 2
-			csv2orcl = Csv2orcl.new(ARGV[0],ARGV[1])
+			csv2orcl = Csv2orcl.new(file_to_process,ARGV[1])
 		end
 	end
       
