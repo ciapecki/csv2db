@@ -3,6 +3,9 @@ Rel. 0.9.7pre
 0.9.7 - filename to process can be in form: Data\<filename.[txt|csv]>
          or Data/<filename.[txt|csv]>
          which is useful when using bash completion
+         - standardized columns replaces #_OF with NO_OF, 
+            as well #,(,) with _
+            and consecutive _+ with single _
 
 0.9.6 - now even files with .csv can be treated as Unicode files
          in these cases you MUST specify encoding in your dbconf.yaml file
