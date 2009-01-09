@@ -369,6 +369,7 @@ class UnicodeReader
          column_name.gsub!('&','_')
          column_name.gsub!(')','_')
          column_name.gsub!('(','_')
+         column_name.gsub!(/_+/,'_')
       } if !@@standardize.nil? and @@standardize == true
       #p headersTab
 
@@ -454,7 +455,7 @@ class Logger
         remote_file = File.basename(filename)
         t = Time.now
         #remote_file = "#{t.year}-#{t.month}-#{t.day}_#{t.hour}:#{t.min}_#{t.zone}_#{remote_file}"
-        remote_file = t.strftime("%Y-%m-%d_%H:%M_") + t.zone + "_#{schema}@#{dbserver}_#{remote_file}"
+        remote_file = t.strftime("%Y-%m-%d_%H:%M_") + t.zone + "_#{schema}@#{dbserver}_#{remote_file}_#{@@ver}"
 
         ftp.puttextfile(filename,remotefile=remote_file)
        end
@@ -469,7 +470,8 @@ end
 
 l = Logger.new
 
-puts "\ncsv2db release0.9.6\n"
+@@ver = 'release0.9.7'
+puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
 	puts "Usage: " + $0 + " <fileName>.[csv|txt] [,|;]"
