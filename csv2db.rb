@@ -366,6 +366,9 @@ class UnicodeReader
          column_name.gsub!(' ','_')
          column_name.gsub!('/','_')
          column_name.gsub!('-','_')
+         column_name.gsub!('&','_')
+         column_name.gsub!(')','_')
+         column_name.gsub!('(','_')
       } if !@@standardize.nil? and @@standardize == true
       #p headersTab
 
