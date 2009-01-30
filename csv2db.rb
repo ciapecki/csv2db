@@ -472,7 +472,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release0.9.7'
+@@ver = 'release0.9.8'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1

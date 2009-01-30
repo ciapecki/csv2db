@@ -1,4 +1,6 @@
-Rel. 0.9.7pre
+Rel. 0.9.8
+
+0.9.8 - changed delimeter to delimiter in dbconf.yaml (actually both spellings are acceptable in this file)
 
 0.9.7 - filename to process can be in form: Data\<filename.[txt|csv]>
          or Data/<filename.[txt|csv]>
