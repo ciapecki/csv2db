@@ -489,7 +489,8 @@ elsif File.exists? "dbconf.yaml" then
 	     @@server 		= conf['server']
 	     @@schema 		= conf['username']
 	     @@password 	= conf['password']
-	     @@delimeter 	= conf['delimeter'] 
+	     @@delimeter 	= conf['delimiter']
+        @@delimeter  ||= conf['delimeter']
 	     @@removeNewLineChr = conf['removeNewLineChr']
 	     @@directUpload 	= conf['directUpload'] if conf['directUpload'] != nil
 	     @@replace 		= conf['replace'] if conf['replace'] != nil
