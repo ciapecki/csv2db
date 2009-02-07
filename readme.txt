@@ -1,4 +1,7 @@
-Rel. 0.9.8
+Rel. 0.9.9
+
+0.9.9 - files with - in name will be properly processed, creating table names enclosed in " chars
+         -> maybe it would be a good thought to standardize it in similar way as column names
 
 0.9.8 - changed delimeter to delimiter in dbconf.yaml (actually both spellings are acceptable in this file)
 

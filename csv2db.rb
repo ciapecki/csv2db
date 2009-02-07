@@ -92,6 +92,7 @@ class Csv2orcl
 		ddlFile = File.new(@ddlFileNamePath, "w")
 
 		createTable = "CREATE TABLE #{table_name} "
+		createTable = "CREATE TABLE \"#{table_name}\" " if table_name.include?("-")
 
 		if @@removeNewLineChr != true 
 			#puts "no removal"
@@ -300,7 +301,7 @@ class ControllFile
 			      "infile '" + @csvFileNamePath + "'\n" +
 			      "discardfile '" + @discardFilePath + "'\n" +
 			      "insert\n" +
-			      "into table " + @schemaName + "." + @tableName +
+			      "into table " + @schemaName + "." + "\"#{@tableName}\"" +
 			      #"\nfields terminated by '" + @delimeter + 
 			      "\nfields terminated by " + @delimeter 
 			      #" optionally enclosed by '\"'" +
@@ -472,7 +473,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release0.9.8'
+@@ver = 'release0.9.9'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
