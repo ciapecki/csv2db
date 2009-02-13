@@ -297,11 +297,14 @@ class ControllFile
       
       #p "#{@ctlContent} #{@utf} #{@@encoding}"
 
+      ctl_tablename = @tableName
+      ctl_tablename = "\"#{@tableName}\"" if @tableName =~ /-/
+
 		@ctlContent = @ctlContent +
 			      "infile '" + @csvFileNamePath + "'\n" +
 			      "discardfile '" + @discardFilePath + "'\n" +
 			      "insert\n" +
-			      "into table " + @schemaName + "." + "\"#{@tableName}\"" +
+			      "into table " + @schemaName + "." + ctl_tablename +
 			      #"\nfields terminated by '" + @delimeter + 
 			      "\nfields terminated by " + @delimeter 
 			      #" optionally enclosed by '\"'" +
