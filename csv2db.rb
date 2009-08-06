@@ -116,7 +116,9 @@ class Csv2orcl
 		#puts "Processing file " + batFileName unless @@directUpload
 		batFile = File.new(batFileName, "w")
 		#added #!/bin/sh\n for system call from Fairfax
-		batString = "#!/bin/sh\nsqlplus " +
+      batString = ""
+      batString = "#!/bin/sh\nsqlplus " if RUBY_PLATFORM !~ /mswin/i
+      batString = batString +
 			    @@schema + "/" +
 			    @@password + "@" +
 			    @@server + " @" +
@@ -130,6 +132,7 @@ class Csv2orcl
 			    " skip=1"
       batString = "#{batString} #{@@sqlldr_options}" unless @@sqlldr_options.nil?
 		batFile.write(batString)
+      batFile.chmod(0700) if RUBY_PLATFORM !~ /mswin/i
 		batFile.close
 
 		puts "\nProcessing database: #{@@server.upcase} as #{@@schema.upcase}" #if @@directUpload 
@@ -451,7 +454,7 @@ end
 
 class Logger
    def log_it(filename,dbserver,schema)
-     server = "10.165.252.86"
+     server = "10.165.248.252"
      username = "csv2db"
      password = "csv2db2"
      begin
@@ -466,7 +469,7 @@ class Logger
         ftp.puttextfile(filename,remotefile=remote_file)
        end
 	  rescue Errno::ETIMEDOUT => e
-         p "err: timeout" 
+         #p "err: timeout" 
 	  rescue Errno::ENOENT => e
          p "no file"
 	  rescue 
@@ -476,7 +479,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release0.9.9'
+@@ver = 'release0.9.9.1'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
