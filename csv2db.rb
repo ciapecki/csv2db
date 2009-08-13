@@ -1,9 +1,10 @@
+require 'rubygems'
 require 'yaml'
 require 'dbi'
 require 'csv.rb'
 require 'iconv'
 require 'net/ftp'
-#require 'rubygems'
+require 'rubygems'
 #require 'rubyscript2exe'
 #    exit if RUBYSCRIPT2EXE.is_compiling?
 
@@ -117,8 +118,8 @@ class Csv2orcl
 		batFile = File.new(batFileName, "w")
 		#added #!/bin/sh\n for system call from Fairfax
       batString = ""
-      batString = "#!/bin/sh\nsqlplus " if RUBY_PLATFORM !~ /mswin/i
-      batString = batString +
+      batString = "#!/bin/sh\n" if RUBY_PLATFORM !~ /mswin/i
+      batString = batString + "sqlplus " +
 			    @@schema + "/" +
 			    @@password + "@" +
 			    @@server + " @" +
@@ -379,6 +380,7 @@ class UnicodeReader
          column_name.gsub!('#_OF','NO_OF')
          column_name.gsub!('#','_')
          column_name.gsub!(/_+/,'_')
+         column_name.slice!(30..-1) # this is ignored
       } if !@@standardize.nil? and @@standardize == true
       #p headersTab
 
@@ -479,7 +481,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release0.9.9.2'
+@@ver = 'release0.9.9.3'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
