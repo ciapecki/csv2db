@@ -380,7 +380,7 @@ class UnicodeReader
          column_name.gsub!('#_OF','NO_OF')
          column_name.gsub!('#','_')
          column_name.gsub!(/_+/,'_')
-         column_name.slice!(30..-1) # this is ignored
+         column_name.slice!(30..-1) 
       } if !@@standardize.nil? and @@standardize == true
       #p headersTab
 
@@ -398,6 +398,12 @@ class UnicodeReader
 	end
 end
 
+# class ColumnNamesFormatter
+#   def format(column_names_array)
+# 
+#   end
+# end
+
 class CSVreader
 	@columnNamesString
 	def getColumnNames(fileName)
@@ -414,17 +420,21 @@ class CSVreader
       puts "  -> if you do not want to change the column names use \n     standardize: false \n     in your dbconf.yaml file" if @@standardize
 
       row.each{|column_name|
-           #p "row: #{column_name}"
          column_name.upcase!
          column_name.gsub!(' ','_')
          column_name.gsub!('/','_')
          column_name.gsub!('-','_')
+         column_name.gsub!('&','_')
+         column_name.gsub!(')','_')
+         column_name.gsub!('(','_')
+         column_name.gsub!('#_OF','NO_OF')
+         column_name.gsub!('#','_')
+         column_name.gsub!(/_+/,'_')
+         column_name.slice!(30..-1) 
       } if !@@standardize.nil? and @@standardize == true
 
-      #p row
 
     			row.size.times{|i| 
-			#@columnNamesString = @columnNamesString + "\"" + row[i].strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(:\\\"" + row[i].strip.gsub(/\s+/," ") + "\\\")\"" + ",\n" 
 			@columnNamesString = @columnNamesString + "\"" + row[i].strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
 			@columnNamesString = @columnNamesString + "replace(" if @@removeNewLineChr
 			@columnNamesString = @columnNamesString + ":\\\"" + row[i].strip.gsub(/\s+/," ") + "\\\""
