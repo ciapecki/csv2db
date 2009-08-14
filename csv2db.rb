@@ -1,3 +1,5 @@
+#!/usr/local/bin/ruby
+
 require 'rubygems'
 require 'yaml'
 require 'dbi'

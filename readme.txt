@@ -1,4 +1,8 @@
-Rel. 0.9.9
+Rel. 0.9.9.3
+
+0.9.9.3 - added shortening column names upto 30chars, when longer names are provided
+
+0.9.9.2 - added chown executable properties for execution under linux
 
 0.9.9 - files with - in name will be properly processed, creating table names enclosed in " chars
          -> maybe it would be a good thought to standardize it in similar way as column names
