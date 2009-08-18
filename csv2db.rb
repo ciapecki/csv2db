@@ -7,6 +7,7 @@ require 'csv.rb'
 require 'iconv'
 require 'net/ftp'
 require 'rubygems'
+require 'fastercsv'
 #require 'rubyscript2exe'
 #    exit if RUBYSCRIPT2EXE.is_compiling?
 
@@ -30,6 +31,8 @@ class Csv2orcl
 	@badFileNamePath
 	@conff
 	@directUpload
+
+  attr_accessor :csvFileName, :encoding, :delimeter, :csvFileNamePath
 
 	def initialize(csvFileName, delimeter = ",", directUpload = false, utf = false)
 
@@ -60,6 +63,9 @@ class Csv2orcl
 	end
 	
 	def process
+
+    #p "Processing..... with handling newline characters?: #{@@handle_new_lines} with encoding #{@@encoding} #{@utf}"
+
 		if FileTest.directory?(@csvDirectory)
 			#puts @csvDirectory + " direcotry - ok"
 		else
@@ -75,13 +81,14 @@ class Csv2orcl
 		create_dir_if_not_exists("Bad/")
 	
 		#puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter.gsub("X'002c'",",")
-		#puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter
+		puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter.inspect
 		@columnNames = CSVreader.new.getColumnNames(@csvFileNamePath) unless @utf
 		@columnNames = UnicodeReader.new.getColumnNames(@csvFileNamePath) if @utf
 		#p "columnNames: " + @columnNames
 	 
 
       table_name = @csvFileName.slice(0..-5)
+      table_name = @csvFileName.slice(0..-5).gsub!(/^u8nl_/,'') if @@handle_new_lines
 
       puts "\nTable #{table_name.upcase} with following columns will be created:"
       @columnNames[1..-1].split("\n").each {|col|
@@ -89,6 +96,7 @@ class Csv2orcl
       }
 	
 		ctlFile = ControllFile.new(@csvFileName,@csvFileNamePath,@delimeter,@columnNames,@utf)
+		#ctlFile = ControllFile.new(@csvFileName,@csvFileNamePath,@delimeter,@columnNames,@utf) if @@handle_new_lines
 		ctlFile.process
 
 		#puts "Processing file " + @ddlFileNamePath 
@@ -142,7 +150,9 @@ class Csv2orcl
 	end
 
 	def getBatFileName
-		@batFileName = @csvFileName.slice(0..-4) + "bat"
+		@batFileName = @csvFileName.slice(0..-4) + "bat" 
+		@batFileName = @csvFileName.slice(0..-4).gsub!(/^u8nl_/,'') + "bat" if @@handle_new_lines
+    @batFileName
 	end
 
 	
@@ -253,10 +263,17 @@ class ControllFile
 		@delimeter = delimeter
 		@columnNames=columnNames
 		@ctlFileName=csvFileName.slice(0..-4) + "ctl"
+		@ctlFileName=csvFileName.slice(0..-4).gsub!(/^u8nl_/,'') + "ctl" if @@handle_new_lines
+    #p "in ctl creation with handle_new_lines set to #{@@handle_new_lines} ctl: #{@ctlFileName}"
+      # table_name = @csvFileName.slice(0..-5).gsub!(/^u8nl_/,'')
 		@ctlFileNamePath="Ctl/" + @ctlFileName
 		@discardFilePath="Dsc/" + csvFileName.slice(0..-4) + "dsc"
+		@discardFilePath="Dsc/" + csvFileName.slice(0..-4).gsub!(/^u8nl_/,'') + "dsc" if @@handle_new_lines
+    #p "in ctl creation with handle_new_lines set to #{@@handle_new_lines} dsc: #{@discardFilePath}"
 		@schemaName = @@schema 
 		@tableName = csvFileName.slice(0..-5)
+		@tableName = csvFileName.slice(0..-5).gsub!(/^u8nl_/,'') if @@handle_new_lines
+    #p "in ctl creation with handle_new_lines set to #{@@handle_new_lines} tableName: #{@tableName}"
 		@columnNamesSQLloader = @columnNames
 		@utf = utf
 	end
@@ -307,7 +324,9 @@ class ControllFile
       ctl_tablename = "\"#{@tableName}\"" if @tableName =~ /-/
 
 		@ctlContent = @ctlContent +
-			      "infile '" + @csvFileNamePath + "'\n" +
+			      "infile '#{@csvFileNamePath}'" 
+    @ctlContent = @ctlContent + " \"str X'7c7e7c0a'\"" if @@handle_new_lines
+    @ctlContent = @ctlContent + "\n" +
 			      "discardfile '" + @discardFilePath + "'\n" +
 			      "insert\n" +
 			      "into table " + @schemaName + "." + ctl_tablename +
@@ -385,6 +404,8 @@ class UnicodeReader
          column_name.slice!(30..-1) 
       } if !@@standardize.nil? and @@standardize == true
       #p headersTab
+      no_of_cols = headersTab.length
+      headersTab[no_of_cols-1] = headersTab[no_of_cols-1][0,(headersTab[no_of_cols-1].length)-3] if @@handle_new_lines
 
     headersTab.size.times{|i|
 			@columnNamesString = @columnNamesString + "\"" + (headersTab[i].gsub(/^\000/,'')).strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
@@ -491,9 +512,53 @@ class Logger
    end
 end
 
+class Converter
+
+  def self.to_utf8(filename,from_encoding)
+    from_encoding = "LATIN1" if from_encoding.nil?
+    #p "just about to convert #{filename} from #{from_encoding} to UTF8 and store under utf8_#{filename}"
+    s = IO.read("Data/#{filename}")
+    ic = Iconv.iconv('UTF-8',from_encoding,s)
+    f = File.new("Data/utf8_#{filename}","w")
+    f.puts ic
+    f.close
+  end
+
+  def self.to_multiline_capable(filename,column_separator)
+    # to be done
+    # reading utf8_filename and produce u8nl_filename => utf8 newline
+    # every new line \n will be replaced with |~|\n combination
+    #                                     "str X'7c7e7c0a'"
+
+
+    output_file = "u8nl_#{filename}"
+    #p "output_file: #{output_file} col_sep: #{column_separator}"
+
+    out = File.open("Data/#{output_file}","w")
+
+    FasterCSV.foreach("Data/utf8_#{filename}",
+               {:encoding => 'U',
+                :col_sep => column_separator}) do |row|
+                
+                      #p "row: #{row.inspect}" 
+                      out << row.to_csv.gsub!(/\n$/,"|~|\n")
+                      out << "\r" if RUBY_PLATFORM =~ /mswin/i
+
+                end
+    out.close
+
+    # removing utf8_#{filename}
+    begin
+      File.delete("Data/utf8_#{filename}")
+    rescue StandardError => e
+      puts "!!! Error in removing Data/utf8_#{filename}"
+    end
+  end
+end
+
 l = Logger.new
 
-@@ver = 'release0.9.9.3'
+@@ver = 'release1.0'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
@@ -511,7 +576,7 @@ elsif File.exists? "dbconf.yaml" then
 	     @@schema 		= conf['username']
 	     @@password 	= conf['password']
 	     @@delimeter 	= conf['delimiter']
-        @@delimeter  ||= conf['delimeter']
+        @@delimeter  ||= conf['delimiter']
 	     @@removeNewLineChr = conf['removeNewLineChr']
 	     @@directUpload 	= conf['directUpload'] if conf['directUpload'] != nil
 	     @@replace 		= conf['replace'] if conf['replace'] != nil
@@ -525,6 +590,7 @@ elsif File.exists? "dbconf.yaml" then
         @@rows_1000 = false
         @@rows_1000 = true if @@sqlldr_options =~ /direct.*=.*true/
         @@standardize = conf.fetch('standardize',true)
+        @@handle_new_lines = conf.fetch('handle_new_lines',false)
      }
 
      #p "standardize: #{@@standardize}"
@@ -535,6 +601,8 @@ elsif File.exists? "dbconf.yaml" then
 
       #ctl_file = ARGV[0].gsub(/\.csv$/i,".ctl").gsub(/\.txt$/i,".ctl")
       ctl_file = file_to_process.gsub(/\.csv$/i,".ctl").gsub(/\.txt$/i,".ctl")
+
+
 
 
 	#p ARGV[0].rindex('.')
@@ -549,7 +617,33 @@ elsif File.exists? "dbconf.yaml" then
 		when 2
 			csv2orcl = Csv2orcl.new(file_to_process,ARGV[1])
 		end
+
+    # if handle_new_lines
+    # copy file_to_process to file_to_process_utf8
+    # copy converted file_to_process_orig to file_to_process_utf8
+
 	end
+  
+
+  if @@handle_new_lines then
+    p "handling of new line characters enabled"
+    # 1. cp original file to _orig
+    # 2. convert to utf8
+    # 3. process with fastercsv
+    csvFileName = csv2orcl.csvFileName
+    utf8_filename = "Data/utf8_#{csvFileName}"
+    #system("cp Data/#{csvFileName} #{utf8_filename}")
+    Converter.to_utf8(csvFileName,@@encoding);
+    Converter.to_multiline_capable(csvFileName,csv2orcl.delimeter);
+    @@encoding = "utf-8"
+    @@delimeter = ","
+    csv2orcl = Csv2orcl.new(file_to_process, @@delimeter,nil,true)
+    csv2orcl.csvFileName = "u8nl_#{csvFileName}"
+    csv2orcl.csvFileNamePath = "Data/u8nl_#{csvFileName}"
+  else
+    p "handling of new line characters disabled"
+  end
+
       
 
 
@@ -572,6 +666,8 @@ elsif File.exists? "dbconf.yaml" then
 		
 		db_conn.close
 	end
+  
+
 	
 else
      puts "sorry but you didn't provide dbconf.yaml file"
