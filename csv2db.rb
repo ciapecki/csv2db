@@ -518,10 +518,15 @@ class Converter
     from_encoding = "LATIN1" if from_encoding.nil?
     #p "just about to convert #{filename} from #{from_encoding} to UTF8 and store under utf8_#{filename}"
     s = IO.read("Data/#{filename}")
-    ic = Iconv.iconv('UTF-8',from_encoding,s)
-    f = File.new("Data/utf8_#{filename}","w")
-    f.puts ic
-    f.close
+    begin
+      ic = Iconv.iconv('UTF-8',from_encoding,s)
+      f = File.new("Data/utf8_#{filename}","wb")
+      f.puts ic
+      f.close
+    rescue StandardError => e
+      p "Error: #{e} => please check if encoding is properly set in dbconf.yaml file"
+      exit
+    end
   end
 
   def self.to_multiline_capable(filename,column_separator)
@@ -534,15 +539,19 @@ class Converter
     output_file = "u8nl_#{filename}"
     #p "output_file: #{output_file} col_sep: #{column_separator}"
 
-    out = File.open("Data/#{output_file}","w")
+    out = File.open("Data/#{output_file}","wb")
 
     FasterCSV.foreach("Data/utf8_#{filename}",
                {:encoding => 'U',
                 :col_sep => column_separator}) do |row|
                 
                       #p "row: #{row.inspect}" 
-                      out << row.to_csv.gsub!(/\n$/,"|~|\n")
-                      out << "\r" if RUBY_PLATFORM =~ /mswin/i
+                      
+                      converted_line = row.to_csv.gsub(/\n$/,"|~|\n") # removed !
+                      converted_line = converted_line.gsub(/\r$/,'')
+                      out << converted_line
+                      #out << "\r" if RUBY_PLATFORM =~ /mswin/i
+                      #p "adding \\rs"
 
                 end
     out.close
