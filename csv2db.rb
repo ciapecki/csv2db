@@ -515,18 +515,32 @@ end
 class Converter
 
   def self.to_utf8(filename,from_encoding)
+    p "converting to utf8...."
     from_encoding = "LATIN1" if from_encoding.nil?
     #p "just about to convert #{filename} from #{from_encoding} to UTF8 and store under utf8_#{filename}"
-    s = IO.read("Data/#{filename}")
+    
+    # s = IO.read("Data/#{filename}")
+    # begin
+    #   ic = Iconv.iconv('UTF-8',from_encoding,s)
+    #   f = File.new("Data/utf8_#{filename}","wb")
+    #   f.puts ic
+    #   f.close
+    # rescue StandardError => e
+    #   p "Error: #{e} => please check if encoding is properly set in dbconf.yaml file"
+    #   exit
+    # end
+    
+    f = File.new("Data/utf8_#{filename}","wb")
     begin
-      ic = Iconv.iconv('UTF-8',from_encoding,s)
-      f = File.new("Data/utf8_#{filename}","wb")
-      f.puts ic
-      f.close
+      File.open("Data/#{filename}").each do |line| 
+        ic = Iconv.iconv('UTF-8',from_encoding,line)
+        f.write ic
+      end
     rescue StandardError => e
       p "Error: #{e} => please check if encoding is properly set in dbconf.yaml file"
       exit
     end
+    f.close
   end
 
   def self.to_multiline_capable(filename,column_separator)
@@ -535,6 +549,8 @@ class Converter
     # every new line \n will be replaced with |~|\n combination
     #                                     "str X'7c7e7c0a'"
 
+
+    p "converting into multiline capable..."
 
     output_file = "u8nl_#{filename}"
     #p "output_file: #{output_file} col_sep: #{column_separator}"
@@ -558,7 +574,7 @@ class Converter
 
     # removing utf8_#{filename}
     begin
-      File.delete("Data/utf8_#{filename}")
+      #File.delete("Data/utf8_#{filename}")
     rescue StandardError => e
       puts "!!! Error in removing Data/utf8_#{filename}"
     end
@@ -567,7 +583,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release1.0'
+@@ver = 'release1.1'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
