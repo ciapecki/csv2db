@@ -349,6 +349,7 @@ end
 class UnicodeReader
 
   def deduplicate_columns(columns_tab)
+    
     h = Hash.new{0}
     
     columns_tab.each{|el|
@@ -359,7 +360,7 @@ class UnicodeReader
       while v > 1
         new_value = k.chop.chop + "_#{v}" if k.length > 27
         new_value = k + "_#{v}" if k.length <= 27
-        p "duplicated column #{k} changed to #{new_value}"
+        p "\nduplicated column #{k} changed to #{new_value}"
         columns_tab[columns_tab.rindex(k)] = new_value
         v -= 1
       end
@@ -430,7 +431,9 @@ class UnicodeReader
       headersTab = deduplicate_columns(headersTab) if !@@standardize.nil? and @@standardize == true
 
       no_of_cols = headersTab.length
-      headersTab[no_of_cols-1] = headersTab[no_of_cols-1][0,(headersTab[no_of_cols-1].length)-3] if @@handle_new_lines
+
+      # do not understand it now :(
+      # headersTab[no_of_cols-1] = headersTab[no_of_cols-1][0,(headersTab[no_of_cols-1].length)-3] if @@handle_new_lines
 
     headersTab.size.times{|i|
 			@columnNamesString = @columnNamesString + "\"" + (headersTab[i].gsub(/^\000/,'')).strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
