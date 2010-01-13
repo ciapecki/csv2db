@@ -390,6 +390,8 @@ class UnicodeReader
       puts "  -> if you do not want to change the column names use \n     standardize: false \n     in your dbconf.yaml file" if @@standardize
 
 
+        # p headersTab
+
       headersTab.each{|column_name|
          column_name.upcase!
          column_name.gsub!(' ','_')
@@ -515,7 +517,7 @@ end
 class Converter
 
   def self.to_utf8(filename,from_encoding)
-    p "converting to utf8...."
+    p "converting to utf8.... from #{from_encoding}"
     from_encoding = "LATIN1" if from_encoding.nil?
     #p "just about to convert #{filename} from #{from_encoding} to UTF8 and store under utf8_#{filename}"
     
@@ -533,7 +535,11 @@ class Converter
     f = File.new("Data/utf8_#{filename}","wb")
     begin
       File.open("Data/#{filename}").each do |line| 
+        #p line
+		    #line = line.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
+        #p line
         ic = Iconv.iconv('UTF-8',from_encoding,line)
+        #p ic
         f.write ic
       end
     rescue StandardError => e
@@ -557,15 +563,21 @@ class Converter
 
     out = File.open("Data/#{output_file}","wb")
 
+    #cnt = 0
     FasterCSV.foreach("Data/utf8_#{filename}",
                {:encoding => 'U',
                 :col_sep => column_separator}) do |row|
+                     #cnt += 1
                 
-                      #p "row: #{row.inspect}" 
+                      #p "row: #{cnt} #{row.inspect}" 
                       
-                      converted_line = row.to_csv.gsub(/\n$/,"|~|\n") # removed !
-                      converted_line = converted_line.gsub(/\r$/,'')
-                      out << converted_line
+                      #p "row to gsub: #{cnt} #{row.to_csv.inspect}" 
+                      
+                      #converted_line = row.to_csv.gsub(/\n$/,"|~|\n") # removed !
+                      converted_line = row.to_csv 
+                      #p "converted row: #{cnt} #{converted_line.inspect}" 
+                      #converted_line = converted_line.gsub(/\r$/,'')
+                      out << converted_line.chomp + "|~|\n"
                       #out << "\r" if RUBY_PLATFORM =~ /mswin/i
                       #p "adding \\rs"
 

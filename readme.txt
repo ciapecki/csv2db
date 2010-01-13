@@ -1,4 +1,6 @@
-Rel. 1.0
+Rel. 1.1
+
+1.1     - changed behaviour when converting files with new line characters in fields, to process line by line and not at once as in 1.0
 
 1.0     - added handling of embedded new line characters.
           the issue is with sqlldr that requires a workaround for handling embedded new line characters:
