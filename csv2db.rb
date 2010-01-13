@@ -357,7 +357,8 @@ class UnicodeReader
     
     h.each do |k, v|
       while v > 1
-        new_value = k.chop.chop + "_#{v}"
+        new_value = k.chop.chop + "_#{v}" if k.length > 27
+        new_value = k + "_#{v}" if k.length <= 27
         p "duplicated column #{k} changed to #{new_value}"
         columns_tab[columns_tab.rindex(k)] = new_value
         v -= 1
@@ -463,7 +464,8 @@ class CSVreader
     
     h.each do |k, v|
       while v > 1
-        new_value = k.chop.chop + "_#{v}"
+        new_value = k.chop.chop + "_#{v}" if k.length > 27
+        new_value = k + "_#{v}" if k.length <= 27
         p "duplicated column #{k} changed to #{new_value}"
         columns_tab[columns_tab.rindex(k)] = new_value
         v -= 1

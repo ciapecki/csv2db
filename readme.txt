@@ -1,4 +1,11 @@
-Rel. 1.1
+Rel. 1.2
+
+1.2     - added deduplication of duplicated column names
+        e.g. 
+        if input file contained 3 same column names 
+        column_name,column_name,column_name
+        it will be converted to
+        column_name,column_name_2,columns_name_3
 
 1.1     - changed behaviour when converting files with new line characters in fields, to process line by line and not at once as in 1.0
 
