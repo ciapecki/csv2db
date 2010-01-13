@@ -347,6 +347,26 @@ class ControllFile
 end
 
 class UnicodeReader
+
+  def deduplicate_columns(columns_tab)
+    h = Hash.new{0}
+    
+    columns_tab.each{|el|
+      h[el] += 1
+    }
+    
+    h.each do |k, v|
+      while v > 1
+        new_value = k.chop.chop + "_#{v}"
+        p "duplicated column #{k} changed to #{new_value}"
+        columns_tab[columns_tab.rindex(k)] = new_value
+        v -= 1
+      end
+    end
+
+    columns_tab
+  end
+
 	def getColumnNames(fileName)
 		File.open(fileName,'rb').each { |line|
 			@headers = line
@@ -405,7 +425,9 @@ class UnicodeReader
          column_name.gsub!(/_+/,'_')
          column_name.slice!(30..-1) 
       } if !@@standardize.nil? and @@standardize == true
-      #p headersTab
+
+      headersTab = deduplicate_columns(headersTab) if !@@standardize.nil? and @@standardize == true
+
       no_of_cols = headersTab.length
       headersTab[no_of_cols-1] = headersTab[no_of_cols-1][0,(headersTab[no_of_cols-1].length)-3] if @@handle_new_lines
 
@@ -431,6 +453,26 @@ end
 
 class CSVreader
 	@columnNamesString
+  
+  def deduplicate_columns(columns_tab)
+    h = Hash.new{0}
+    
+    columns_tab.each{|el|
+      h[el] += 1
+    }
+    
+    h.each do |k, v|
+      while v > 1
+        new_value = k.chop.chop + "_#{v}"
+        p "duplicated column #{k} changed to #{new_value}"
+        columns_tab[columns_tab.rindex(k)] = new_value
+        v -= 1
+      end
+    end
+
+    columns_tab
+  end
+
 	def getColumnNames(fileName)
 		#p "fileNameeee : " + fileName + @@delimeter
 		@counter = 0
@@ -458,6 +500,7 @@ class CSVreader
          column_name.slice!(30..-1) 
       } if !@@standardize.nil? and @@standardize == true
 
+      row = deduplicate_columns(row) if !@@standardize.nil? and @@standardize == true
 
     			row.size.times{|i| 
 			@columnNamesString = @columnNamesString + "\"" + row[i].strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
@@ -595,7 +638,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release1.1'
+@@ver = 'release1.2'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
