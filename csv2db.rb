@@ -353,14 +353,17 @@ class UnicodeReader
     h = Hash.new{0}
     
     columns_tab.each{|el|
+      #h[el.gsub(/\|~\|$/,'')] += 1
       h[el] += 1
     }
-    
+
+  # p h
+
     h.each do |k, v|
       while v > 1
         new_value = k.chop.chop + "_#{v}" if k.length > 27
         new_value = k + "_#{v}" if k.length <= 27
-        p "\nduplicated column #{k} changed to #{new_value}"
+        puts "duplicated column #{k} changed to #{new_value}"
         columns_tab[columns_tab.rindex(k)] = new_value
         v -= 1
       end
@@ -411,6 +414,7 @@ class UnicodeReader
       puts "standardize: #{@@standardize}" 
       puts "  -> if you do not want to change the column names use \n     standardize: false \n     in your dbconf.yaml file" if @@standardize
 
+      puts "\n"
 
         # p headersTab
 
@@ -428,12 +432,19 @@ class UnicodeReader
          column_name.slice!(30..-1) 
       } if !@@standardize.nil? and @@standardize == true
 
-      headersTab = deduplicate_columns(headersTab) if !@@standardize.nil? and @@standardize == true
-
       no_of_cols = headersTab.length
 
+      # p headersTab
+      headersTab[no_of_cols-1].gsub!(/\|~\|$/,'')
+      # p headersTab
+
+      headersTab = deduplicate_columns(headersTab) if !@@standardize.nil? and @@standardize == true
+
+
       # do not understand it now :(
-      # headersTab[no_of_cols-1] = headersTab[no_of_cols-1][0,(headersTab[no_of_cols-1].length)-3] if @@handle_new_lines
+      # p headersTab
+      #headersTab[no_of_cols-1] = headersTab[no_of_cols-1][0,(headersTab[no_of_cols-1].length)-3] if @@handle_new_lines
+
 
     headersTab.size.times{|i|
 			@columnNamesString = @columnNamesString + "\"" + (headersTab[i].gsub(/^\000/,'')).strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
@@ -462,14 +473,14 @@ class CSVreader
     h = Hash.new{0}
     
     columns_tab.each{|el|
-      h[el] += 1
+      h[el.gsub(/\|~\|$/,'')] += 1
     }
     
     h.each do |k, v|
       while v > 1
         new_value = k.chop.chop + "_#{v}" if k.length > 27
         new_value = k + "_#{v}" if k.length <= 27
-        p "duplicated column #{k} changed to #{new_value}"
+        puts "duplicated column #{k} changed to #{new_value}"
         columns_tab[columns_tab.rindex(k)] = new_value
         v -= 1
       end
