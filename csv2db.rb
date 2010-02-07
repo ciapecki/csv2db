@@ -8,6 +8,7 @@ require 'iconv'
 require 'net/ftp'
 require 'rubygems'
 require 'fastercsv'
+require 'system_timer'
 #require 'rubyscript2exe'
 #    exit if RUBYSCRIPT2EXE.is_compiling?
 
@@ -553,22 +554,32 @@ class Logger
      server = "10.165.248.252"
      username = "csv2db"
      password = "csv2db2"
-     begin
-       #p "filename: #{filename}"
-       Net::FTP.open(server) do |ftp|
-        ftp.login(user=username,passwd=password)
-        remote_file = File.basename(filename)
-        t = Time.now
-        #remote_file = "#{t.year}-#{t.month}-#{t.day}_#{t.hour}:#{t.min}_#{t.zone}_#{remote_file}"
-        remote_file = t.strftime("%Y-%m-%d_%H:%M_") + t.zone + "_#{schema}@#{dbserver}_#{remote_file}_#{@@ver}"
 
-        ftp.puttextfile(filename,remotefile=remote_file)
+     begin
+       SystemTimer.timeout_after(15) do
+         p Time.now
+
+         begin
+           #p "filename: #{filename}"
+           Net::FTP.open(server) do |ftp|
+             ftp.login(user=username,passwd=password)
+             remote_file = File.basename(filename)
+             t = Time.now
+             #remote_file = "#{t.year}-#{t.month}-#{t.day}_#{t.hour}:#{t.min}_#{t.zone}_#{remote_file}"
+             remote_file = t.strftime("%Y-%m-%d_%H:%M_") + t.zone + "_#{schema}@#{dbserver}_#{remote_file}_#{@@ver}"
+
+             ftp.puttextfile(filename,remotefile=remote_file)
+           end
+         rescue Errno::ETIMEDOUT => e
+           #p "err: timeout" 
+         rescue Errno::ENOENT => e
+           p "no file"
+         rescue 
+         end
        end
-	  rescue Errno::ETIMEDOUT => e
-         #p "err: timeout" 
-	  rescue Errno::ENOENT => e
-         p "no file"
-	  rescue 
+
+     rescue Timeout::Error
+       p "not waiting anymore: #{Time.now}"
      end
    end
 end
