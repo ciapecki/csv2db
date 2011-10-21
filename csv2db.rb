@@ -601,7 +601,8 @@ class Converter
     #   p "Error: #{e} => please check if encoding is properly set in dbconf.yaml file"
     #   exit
     # end
-    
+   
+    first_line = true
     f = File.new("Data/utf8_#{filename}","wb")
     begin
       File.open("Data/#{filename}").each do |line| 
@@ -609,6 +610,13 @@ class Converter
 		    #line = line.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
         #p line
         ic = Iconv.iconv('UTF-8',from_encoding,line)
+        if first_line
+          # p ic.class
+          # p ic.to_s
+          ic.first.gsub!("\xEF\xBB\xBF", '') # strip the BOM (byte order mark) from the first line of input
+          # p ic.to_s
+          first_line = false
+        end
         #p ic
         f.write ic
       end
