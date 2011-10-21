@@ -129,7 +129,7 @@ class Csv2orcl
 		batFile = File.new(batFileName, "w")
 		#added #!/bin/sh\n for system call from Fairfax
       batString = ""
-      batString = "#!/bin/sh\n" if RUBY_PLATFORM !~ /mswin/i
+      batString = "#!/bin/sh\n" if RUBY_PLATFORM !~ /mswin|mingw/i
       batString = batString + "sqlplus " +
 			    @@schema + "/" +
 			    @@password + "@" +
@@ -144,7 +144,7 @@ class Csv2orcl
 			    " skip=1"
       batString = "#{batString} #{@@sqlldr_options}" unless @@sqlldr_options.nil?
 		batFile.write(batString)
-      batFile.chmod(0700) if RUBY_PLATFORM !~ /mswin/i
+      batFile.chmod(0700) if RUBY_PLATFORM !~ /mswin|mingw/i
 		batFile.close
 
 		puts "\nProcessing database: #{@@server.upcase} as #{@@schema.upcase}" #if @@directUpload 
