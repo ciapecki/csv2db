@@ -7,8 +7,9 @@ require 'csv.rb'
 require 'iconv'
 require 'net/ftp'
 require 'rubygems'
+# gem 'fastercsv', '=1.5.3'
 require 'fastercsv'
-require 'system_timer'
+require 'system_timer' if RUBY_PLATFORM !~ /mswin|mingw/i
 #require 'rubyscript2exe'
 #    exit if RUBYSCRIPT2EXE.is_compiling?
 
@@ -551,35 +552,56 @@ end
 
 class Logger
    def log_it(filename,dbserver,schema)
-     server = "10.165.248.252"
-     username = "csv2db"
-     password = "csv2db2"
+     @server = "10.165.248.252"
+     @username = "csv2db"
+     @password = "csv2db2"
 
+     @filename,@dbserver,@schema=filename,dbserver,schema
+
+       
+    if RUBY_PLATFORM =~ /mswin|mingw/i
+      log_wo_timeout
+    else
+      log_w_timeout
+    end
+
+   end
+
+   def log_w_timeout
      begin
        SystemTimer.timeout_after(15) do
-         p Time.now
 
-         begin
-           #p "filename: #{filename}"
-           Net::FTP.open(server) do |ftp|
-             ftp.login(user=username,passwd=password)
-             remote_file = File.basename(filename)
-             t = Time.now
-             #remote_file = "#{t.year}-#{t.month}-#{t.day}_#{t.hour}:#{t.min}_#{t.zone}_#{remote_file}"
-             remote_file = t.strftime("%Y-%m-%d_%H:%M_") + t.zone + "_#{schema}@#{dbserver}_#{remote_file}_#{@@ver}"
-
-             ftp.puttextfile(filename,remotefile=remote_file)
-           end
-         rescue Errno::ETIMEDOUT => e
-           #p "err: timeout" 
-         rescue Errno::ENOENT => e
-           p "no file"
-         rescue 
-         end
+         log_wo_timeout
+       end 
+       rescue Timeout::Error
+         p "not waiting anymore: #{Time.now}"
        end
+   end
 
-     rescue Timeout::Error
-       p "not waiting anymore: #{Time.now}"
+
+   def log_wo_timeout
+     p Time.now
+     begin
+       #p "filename: #{filename}"
+
+       Net::FTP.open(@server) do |ftp|
+         # p "ftp opened"
+         ftp.login(user=@username,passwd=@password)
+         remote_file = File.basename(@filename)
+         t = Time.now
+         #remote_file = "#{t.year}-#{t.month}-#{t.day}_#{t.hour}:#{t.min}_#{t.zone}_#{remote_file}"
+         remote_file = t.strftime("%Y-%m-%d_%H:%M_") + t.zone + "_#{@schema}@#{@dbserver}_#{remote_file}_#{@@ver}"
+
+         ftp.passive = true
+         ftp.puttextfile(@filename,remotefile=remote_file)
+         # ftp.puttextfile(@filename,'aaa.txt')
+       end
+     rescue Errno::ETIMEDOUT => e
+       p "err: timeout" 
+     rescue Errno::ENOENT => e
+       p "no file"
+     # rescue 
+     #   raise if RUBY_PLATFORM !~ /mswin|mingw/i
      end
    end
 end
@@ -771,7 +793,7 @@ elsif File.exists? "dbconf.yaml" then
 			puts "Finished:" unless @@directUpload
 			puts "Run now " + csv2orcl.getBatFileName unless @@directUpload
 	end
-   
+  
    l.log_it("Ctl/#{ctl_file}",@@server,@@schema)
 
 	if @@directUpload then
