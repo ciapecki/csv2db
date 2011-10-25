@@ -1,6 +1,6 @@
 Rel. 1.3
 
-1.3     - removed annoying BOM added by some text editors and list formats from GCM
+1.3     - removed annoying BOM added by some text editors and lists generated from GCM
 
 1.2     - added deduplication of duplicated column names
         e.g. 
