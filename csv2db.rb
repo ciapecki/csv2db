@@ -8,25 +8,30 @@ require 'iconv'
 require 'net/ftp'
 require 'rubygems'
 # gem 'fastercsv', '=1.5.3'
-require 'fastercsv'
-require 'system_timer' if RUBY_PLATFORM !~ /mswin|mingw/i
+#require 'fastercsv'
+# require 'system_timer' if RUBY_PLATFORM !~ /mswin|mingw/i
 #require 'rubyscript2exe'
 #    exit if RUBYSCRIPT2EXE.is_compiling?
 
 
 require 'rubygems'
 #require 'progressbar'
-@@server = ""
-@@schema = ""
-@@password = ""
-@@delimeter = ""
-@@removeNewLineChr = false
-@@directUpload = false 
-@@replace = true
 
-@@pbar = ""
+
 
 class Csv2orcl
+
+
+  @@server = ""
+  @@schema = ""
+  @@password = ""
+  @@delimeter = ""
+  @@removeNewLineChr = false
+  @@directUpload = false 
+  @@replace = true
+
+  @@pbar = ""
+
 	@csvFileName
 	@ctlFileNamePath
 	@logFileNamePath
@@ -294,10 +299,10 @@ class ControllFile
 	def process
     if @utf and (@@encoding.nil? or @@encoding == "ucs-2le") then 
       case @delimeter 
-        when ","  : @delimeter = "X'002c'"  # ','
-        when "\t" : @delimeter = "X'0009'"  # '\t'
-        when ";"  : @delimeter = "X'003b'"  # '\t'
-        when "|"  : @delimeter = "X'007c'"  # '\t'
+        when ","  then @delimeter = "X'002c'"  # ','
+        when "\t" then @delimeter = "X'0009'"  # '\t'
+        when ";"  then @delimeter = "X'003b'"  # '\t'
+        when "|"  then @delimeter = "X'007c'"  # '\t'
       end
     end
       #puts "delimeter: #{@delimeter.inspect} as"
@@ -400,7 +405,15 @@ class UnicodeReader
 	end
 
 
-    headersTab = CSV::Reader.parse(@headers,fs = @@delimeter).to_a[0]
+   p "we're here"
+    #headersTab = CSV.parse(@headers,fs = @@delimeter).to_a[0]
+  
+    p @headers
+    p @@delimeter
+   
+    headersTab = CSV.parse(@headers,{:col_sep => @@delimeter}).to_a[0]
+
+
 
     #headersTab = @headers.split(@@delimeter)
 		#ic = Iconv.new("US-ASCII//IGNORE", "UTF-16LE")
@@ -572,7 +585,8 @@ class Logger
 
    def log_w_timeout
      begin
-       SystemTimer.timeout_after(15) do
+       # SystemTimer.timeout_after(15) do
+       Timeout::timeout(15) do
 
          log_wo_timeout
        end 
@@ -631,18 +645,27 @@ class Converter
     f = File.new("Data/utf8_#{filename}","wb")
     begin
       File.open("Data/#{filename}").each do |line| 
-        #p line
+        p "--lll---"
+        p line
+        p from_encoding
+        p "----------"
 		    # line = line.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
         #p line
-        ic = Iconv.iconv('UTF-8',from_encoding,line)
+        #ic = Iconv.iconv('UTF-8',from_encoding,line)
+        p line.force_encoding(from_encoding)
+        ic = line.force_encoding(from_encoding).encode("utf-8")
+        #ic = line.encode('UTF-8', :invalid => :replace, :replace => '').encode(from_encoding)
+
+        p ic
         if first_line
           # p ic.class
           # p ic.to_s
-          ic.first.gsub!("\xEF\xBB\xBF", '') # strip the BOM (byte order mark) from the first line of input
+          #ic.first.gsub!("\xEF\xBB\xBF", '') # strip the BOM (byte order mark) from the first line of input
+          ic.gsub!("\xEF\xBB\xBF", '') # strip the BOM (byte order mark) from the first line of input
           # p ic.to_s
           first_line = false
         end
-        #p ic
+        p "++++"
         f.write ic
       end
     rescue StandardError => e
@@ -666,9 +689,10 @@ class Converter
 
     out = File.open("Data/#{output_file}","wb")
 
-    #cnt = 0
-    FasterCSV.foreach("Data/utf8_#{filename}",
-               {:encoding => 'U',
+    cnt = 0
+    CSV.foreach("Data/utf8_#{filename}",
+               #{:encoding => 'U',
+               {:encoding => 'utf-8',
                 :col_sep => column_separator}) do |row|
                      #cnt += 1
                 
@@ -678,7 +702,7 @@ class Converter
                       
                       #converted_line = row.to_csv.gsub(/\n$/,"|~|\n") # removed !
                       converted_line = row.to_csv 
-                      #p "converted row: #{cnt} #{converted_line.inspect}" 
+                      #p "converted row: #{cnt} #{converted_line.chomp.inspect}" 
                       #converted_line = converted_line.gsub(/\r$/,'')
                       out << converted_line.chomp + "|~|\n"
                       #out << "\r" if RUBY_PLATFORM =~ /mswin/i
@@ -698,7 +722,7 @@ end
 
 l = Logger.new
 
-@@ver = 'release1.3'
+@@ver = 'release1.4'
 puts "\ncsv2db #{@@ver}\n"
 
 if ARGV.length < 1
