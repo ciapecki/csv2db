@@ -379,7 +379,7 @@ class UnicodeReader
 			@headers = line
 			break
 		}
-		@headers = @headers.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
+		@headers = @headers.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'') 
 		#headersTab = @headers.split("\t")   # changed to @@delimeter
     #puts "delimglob: #{@@delimeter}"
 
@@ -388,10 +388,13 @@ class UnicodeReader
 		ic = Iconv.new("US-ASCII//IGNORE", "UTF-8") if @@encoding != nil and @@encoding == "utf-8"
    
    begin
-      @headers = ic.iconv(@headers.gsub(/^\000/,''))
-   
+      p "headers #{@headers.inspect}"
+      p "headers #{@headers.class}"
+      @headers = ic.iconv(@headers.gsub(/^\000/,'')) if @@encoding == "utf-8"
+      # @headers = @headers[1..10] if @@encoding == "ucs-2le"
+   p "after headers #{@headers.inspect}"
 	rescue StandardError => e
-		puts "!!! Error in encoding"
+		puts "!!! Error in encoding #{e.inspect}"
       puts "Please check your dbconf.yaml encoding value"
 		exit
 	end
@@ -629,7 +632,7 @@ class Converter
     begin
       File.open("Data/#{filename}").each do |line| 
         #p line
-		    #line = line.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
+		    # line = line.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
         #p line
         ic = Iconv.iconv('UTF-8',from_encoding,line)
         if first_line
@@ -643,7 +646,7 @@ class Converter
         f.write ic
       end
     rescue StandardError => e
-      p "Error: #{e} => please check if encoding is properly set in dbconf.yaml file"
+      p "Error: #{e.inspect} => please check if encoding is properly set in dbconf.yaml file"
       exit
     end
     f.close
