@@ -1,5 +1,7 @@
 #!/usr/local/bin/ruby
 
+$VERBOSE = nil
+
 require 'rubygems'
 require 'yaml'
 require 'dbi'
