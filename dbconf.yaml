@@ -1,0 +1,10 @@
+server: emeadb11
+username: scott
+password: tiger
+#delimiter: "\t"  # tabulator
+delimiter: ","
+sqlldr_options: direct=true
+#standardize: false 
+encoding: utf-8
+#characterset: WE8ISO8859P1
+handle_new_lines: true # comment if you do not want to care about new lines, or you're sure there are no new lines in your input file
