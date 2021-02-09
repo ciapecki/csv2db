@@ -90,7 +90,7 @@ class Csv2orcl
     create_dir_if_not_exists("Bad/")
   
     #puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter.gsub("X'002c'",",")
-    puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter.inspect
+    #puts "Processing file " + @csvFileNamePath + " delimeter: " + @delimeter.inspect
     @columnNames = CSVreader.new.getColumnNames(@csvFileNamePath) unless @utf
     @columnNames = UnicodeReader.new.getColumnNames(@csvFileNamePath) if @utf
     #p "columnNames: " + @columnNames
@@ -99,7 +99,7 @@ class Csv2orcl
       table_name = @csvFileName.slice(0..-5)
       table_name = @csvFileName.slice(0..-5).gsub!(/^u8nl_/,'') if @@handle_new_lines
 
-      puts "\nTable #{table_name.upcase} with following columns will be created:"
+      puts "\nTable #{table_name.upcase} with following columns (see if on separate lines) will be created:"
       @columnNames[1..-1].split("\n").each {|col|
          puts col.gsub(/CHAR\(4000\) \"trim\(:\\\".*/,'')
       }
@@ -198,7 +198,7 @@ class Csv2orcl
     begin
       sth = db_connection.do(create_sql)
     rescue DBI::DatabaseError => e
-      puts "\nERROR: #{e}"
+      puts "\nERRORooo: #{e}"
       return -1
     end
 
@@ -395,11 +395,11 @@ class UnicodeReader
     ic = Iconv.new("US-ASCII//IGNORE", "UTF-8") if @@encoding != nil and @@encoding == "utf-8"
    
    begin
-      p "headers #{@headers.inspect}"
-      p "headers #{@headers.class}"
+      #p "headers #{@headers.inspect}"
+      #p "headers #{@headers.class}"
       @headers = ic.iconv(@headers.gsub(/^\000/,'')) if @@encoding == "utf-8"
       # @headers = @headers[1..10] if @@encoding == "ucs-2le"
-   p "after headers #{@headers.inspect}"
+   #p "after headers #{@headers.inspect}"
   rescue StandardError => e
     puts "!!! Error in encoding #{e.inspect}"
       puts "Please check your dbconf.yaml encoding value"
@@ -407,11 +407,11 @@ class UnicodeReader
   end
 
 
-   p "we're here"
+   #p "we're here"
     #headersTab = CSV.parse(@headers,fs = @@delimeter).to_a[0]
   
-    p @headers
-    p @@delimeter
+    #p @headers
+    #p @@delimeter
    
     headersTab = CSV.parse(@headers,{:col_sep => @@delimeter}).to_a[0]
 
@@ -577,29 +577,32 @@ class Logger
      @filename,@dbserver,@schema=filename,dbserver,schema
 
        
-    if RUBY_PLATFORM =~ /mswin|mingw/i
-      log_wo_timeout
-    else
+    #if RUBY_PLATFORM =~ /mswin|mingw/i
+      #log_wo_timeout
       log_w_timeout
-    end
+    #else
+    #  log_w_timeout
+    #end
 
    end
 
    def log_w_timeout
      begin
+       #p "logging..."
        # SystemTimer.timeout_after(15) do
-       Timeout::timeout(15) do
-
+       Timeout::timeout(10) do
          log_wo_timeout
        end 
        rescue Timeout::Error
          p "not waiting anymore: #{Time.now}"
+       rescue Errno::EHOSTUNREACH
+         p "" # no host skipping
        end
    end
 
 
    def log_wo_timeout
-     p Time.now
+     #p Time.now
      begin
        #p "filename: #{filename}"
 
@@ -647,18 +650,18 @@ class Converter
     f = File.new("Data/utf8_#{filename}","wb")
     begin
       File.open("Data/#{filename}").each do |line| 
-        p "--lll---"
-        p line
-        p from_encoding
-        p "----------"
+        #p "--lll---"
+        #p line
+        #p from_encoding
+        #p "----------"
         # line = line.gsub("\r",'').gsub("\n",'').gsub(/\000$/,'')
         #p line
         #ic = Iconv.iconv('UTF-8',from_encoding,line)
-        p line.force_encoding(from_encoding)
+        #p line.force_encoding(from_encoding)
         ic = line.force_encoding(from_encoding).encode("utf-8")
         #ic = line.encode('UTF-8', :invalid => :replace, :replace => '').encode(from_encoding)
 
-        p ic
+        #p ic
         if first_line
           # p ic.class
           # p ic.to_s
@@ -667,7 +670,7 @@ class Converter
           # p ic.to_s
           first_line = false
         end
-        p "++++"
+        #p "++++"
         f.write ic
       end
     rescue StandardError => e
@@ -692,6 +695,8 @@ class Converter
     out = File.open("Data/#{output_file}","wb")
 
     cnt = 0
+
+  begin
     CSV.foreach("Data/utf8_#{filename}",
                #{:encoding => 'U',
                {:encoding => 'utf-8',
@@ -711,6 +716,10 @@ class Converter
                       #p "adding \\rs"
 
                 end
+  rescue
+    puts "something went wrong maybe wrong delimiter??? #{column_separator}"
+    exit
+  end
     out.close
 
     # removing utf8_#{filename}
@@ -737,12 +746,12 @@ elsif File.exists? "dbconf.yaml" then
   #ext = ARGV[0].slice(ARGV[0].rindex('.')+1,ARGV[0].length-ARGV[0].rindex('.'))  
   ext = file_to_process.slice(file_to_process.rindex('.')+1,file_to_process.length-file_to_process.rindex('.'))  
      configFile = File.open("dbconf.yaml") 
-     config = YAML::load_documents(configFile) { |conf| 
+       config = Psych.load_stream(configFile) { |conf| 
        @@server     = conf['server']
        @@schema     = conf['username']
        @@password   = conf['password']
        @@delimeter   = conf['delimiter']
-        @@delimeter  ||= conf['delimiter']
+       @@delimeter  ||= conf['delimiter']
        @@removeNewLineChr = conf['removeNewLineChr']
        @@directUpload   = conf['directUpload'] if conf['directUpload'] != nil
        @@replace     = conf['replace'] if conf['replace'] != nil
@@ -821,6 +830,7 @@ elsif File.exists? "dbconf.yaml" then
       puts ""
       puts "Finished:" unless @@directUpload
       puts "Run now " + csv2orcl.getBatFileName unless @@directUpload
+      puts "\n"
   end
   
    l.log_it("Ctl/#{ctl_file}",@@server,@@schema)
