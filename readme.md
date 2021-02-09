@@ -1,6 +1,7 @@
 Rel. 1.4
 
 1.4     - working in ruby 2.x
+
         - supporting UTF8 only -> you need to save in Excel as csv UTF8
 
 1.3     - removed annoying BOM added by some text editors and lists generated from GCM

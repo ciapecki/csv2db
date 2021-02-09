@@ -736,16 +736,23 @@ l = Logger.new
 @@ver = 'release1.4'
 puts "\ncsv2db #{@@ver}\n"
 
+
+conf_file = "dbconf.yaml"
+conf_file = "dbconf2.yaml" if File.exists? "dbconf2.yaml"
+
 if ARGV.length < 1
   puts "Usage: " + $0 + " <fileName>.[csv] [,|;]"
    #l.log_it("dbconf.yaml2")
-elsif File.exists? "dbconf.yaml" then
+  
+#elsif File.exists? "dbconf.yaml" then
+elsif File.exists? conf_file then
 
+  p "using #{conf_file}"
   
    file_to_process = ARGV[0].gsub(/.*\//,'').gsub(/.*\\/,'')
   #ext = ARGV[0].slice(ARGV[0].rindex('.')+1,ARGV[0].length-ARGV[0].rindex('.'))  
   ext = file_to_process.slice(file_to_process.rindex('.')+1,file_to_process.length-file_to_process.rindex('.'))  
-     configFile = File.open("dbconf.yaml") 
+     configFile = File.open(conf_file) 
        config = Psych.load_stream(configFile) { |conf| 
        @@server     = conf['server']
        @@schema     = conf['username']
@@ -847,4 +854,5 @@ elsif File.exists? "dbconf.yaml" then
   
 else
      puts "sorry but you didn't provide dbconf.yaml file"
+     exit
 end 
