@@ -2,7 +2,7 @@ server: emeadb11
 username: scott
 password: tiger
 #delimiter: "\t"  # tabulator
-delimiter: ","
+delimiter: ";"
 sqlldr_options: direct=true
 #standardize: false 
 encoding: utf-8
