@@ -152,7 +152,10 @@ class Csv2orcl
           " skip=1"
       batString = "#{batString} #{@@sqlldr_options}" unless @@sqlldr_options.nil?
     batFile.write(batString)
-      batFile.chmod(0700) if RUBY_PLATFORM !~ /mswin|mingw/i
+
+    batFile.write("pause") if RUBY_PLATFORM !~ /mswin|mingw/i
+
+    batFile.chmod(0700) if RUBY_PLATFORM !~ /mswin|mingw/i
     batFile.close
 
     puts "\nProcessing database: #{@@server.upcase} as #{@@schema.upcase}" #if @@directUpload 
@@ -561,7 +564,7 @@ class DBconnection
 
   def get_connection(server,username,password)
       @db_conn = DBI.connect("dbi:OCI8:" << server, username, password)
-      end
+  end
 
   def close
     @db_conn.disconnect if @db_conn
