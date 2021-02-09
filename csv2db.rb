@@ -153,7 +153,7 @@ class Csv2orcl
       batString = "#{batString} #{@@sqlldr_options}" unless @@sqlldr_options.nil?
     batFile.write(batString)
 
-    batFile.write("pause") if RUBY_PLATFORM !~ /mswin|mingw/i
+    batFile.write("pause") if RUBY_PLATFORM =~ /mswin|mingw/i
 
     batFile.chmod(0700) if RUBY_PLATFORM !~ /mswin|mingw/i
     batFile.close
