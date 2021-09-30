@@ -116,14 +116,15 @@ class Csv2orcl
 
     if @@removeNewLineChr != true 
       #puts "no removal"
-      createTable = createTable + @columnNames.gsub(/CHAR\(4000\)\s\"trim\(:\\\".*\"\)\"/,"VARCHAR2(4000)")  
+      createTable = createTable + @columnNames.gsub(/CHAR\(32768\)\s\"substrb\(trim\(:\\\".*\"\),1,4000\)\"/,"VARCHAR2(4000)")  
     else
       puts "with removal"
-      createTable = createTable + @columnNames.gsub(/CHAR\(4000\)\s\"trim\(replace\(:\\\"([a-zA-Z0-9]\S*)*((\s*)[a-zA-Z0-9\*]\S*\s*)*\\\",chr\(10\),' '\)\)\"/,"VARCHAR2(4000)")
+      createTable = createTable + @columnNames.gsub(/CHAR\(32768\)\s\"substrb\(trim\(replace\(:\\\"([a-zA-Z0-9]\S*)*((\s*)[a-zA-Z0-9\*]\S*\s*)*\\\",chr\(10\),' '\)\),1,4000\)\"/,"VARCHAR2(4000)")
     end
     
     if createTable =~ /\sCHAR/  
       p "ERROR!!!: something wrong -> CHAR instead of VARCHAR2 in sql query" 
+      # p createTable
       return -1 
     end
 
@@ -470,11 +471,11 @@ class UnicodeReader
 
 
     headersTab.size.times{|i|
-      @columnNamesString = @columnNamesString + "\"" + (headersTab[i].gsub(/^\000/,'')).strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
+      @columnNamesString = @columnNamesString + "\"" + (headersTab[i].gsub(/^\000/,'')).strip.gsub(/\s+/," ") + "\"" + " CHAR(32768) " + "\"substrb(trim(" 
       @columnNamesString = @columnNamesString + "replace(" if @@removeNewLineChr
       @columnNamesString = @columnNamesString + ":\\\"" + (headersTab[i].gsub(/^\000/,'')).strip.gsub(/\s+/," ") + "\\\""
       @columnNamesString = @columnNamesString + ",chr(10),' ')" if @@removeNewLineChr
-      @columnNamesString = @columnNamesString + ")\"" + ",\n" 
+      @columnNamesString = @columnNamesString + "),1,4000)\"" + ",\n" 
       }
     @columnNamesString = @columnNamesString.chomp.slice(0..-2) + ")"
 
@@ -542,11 +543,11 @@ class CSVreader
       row = deduplicate_columns(row) if !@@standardize.nil? and @@standardize == true
 
           row.size.times{|i| 
-      @columnNamesString = @columnNamesString + "\"" + row[i].strip.gsub(/\s+/," ") + "\"" + " CHAR(4000) " + "\"trim(" 
+      @columnNamesString = @columnNamesString + "\"" + row[i].strip.gsub(/\s+/," ") + "\"" + " CHAR(32768) " + "\"substrb(trim(" 
       @columnNamesString = @columnNamesString + "replace(" if @@removeNewLineChr
       @columnNamesString = @columnNamesString + ":\\\"" + row[i].strip.gsub(/\s+/," ") + "\\\""
       @columnNamesString = @columnNamesString + ",chr(10),' ')" if @@removeNewLineChr
-      @columnNamesString = @columnNamesString + ")\"" + ",\n" 
+      @columnNamesString = @columnNamesString + "),1,4000)\"" + ",\n" 
       }
       @columnNamesString = @columnNamesString.chomp.slice(0..-2) + ")"
       return @columnNamesString
